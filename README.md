@@ -36,7 +36,7 @@ flowchart TB
     RG[Resource Group]
 
     subgraph hub [Hub VNet 10.0.0.0/16]
-      APP[snet-app 10.0.1.0/24]
+      APP[snet-app 10.0.1.1/24]
       DATA[snet-data 10.0.2.0/24]
       NSG_A[NSG app]
       NSG_D[NSG data]
@@ -45,7 +45,7 @@ flowchart TB
     end
 
     subgraph spoke [Spoke VNet 10.10.0.0/16 — on-prem stand-in]
-      ONPREM[snet-onprem 10.10.1.0/24]
+      ONPREM[snet-onprem 10.10.1.1/24]
       NSG_S[NSG spoke]
       ONPREM --- NSG_S
     end

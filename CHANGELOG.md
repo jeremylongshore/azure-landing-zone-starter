@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.1.1] - 2026-07-14
+
+- fix(ci): avoid secrets in job-level if for terraform workflow (9278411)
+
+
 All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),

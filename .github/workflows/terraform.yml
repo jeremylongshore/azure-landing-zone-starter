@@ -101,7 +101,7 @@ jobs:
       # ------------------------------------------------------------------
       - name: Azure Login (OIDC)
         if: steps.creds.outputs.has_creds == 'true'
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -112,7 +112,7 @@ jobs:
       # Comment out the OIDC step above and use one of:
       #
       #   - name: Azure Login (Service Principal)
-      #     uses: azure/login@v2
+      #     uses: azure/login@v3
       #     with:
       #       creds: ${{ secrets.AZURE_CREDENTIALS }}
       #
@@ -185,7 +185,7 @@ jobs:
           terraform_wrapper: false
 
       - name: Azure Login (OIDC)
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}

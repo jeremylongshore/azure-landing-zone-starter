@@ -1,0 +1,187 @@
+name: Terraform
+
+on:
+  pull_request:
+    paths:
+      - "*.tf"
+      - "modules/**"
+      - ".github/workflows/terraform.yml"
+      - "terraform.tfvars.example"
+  push:
+    branches: [main]
+    paths:
+      - "*.tf"
+      - "modules/**"
+      - ".github/workflows/terraform.yml"
+      - "terraform.tfvars.example"
+  workflow_dispatch:
+
+# Least privilege defaults. id-token:write is required for OIDC login.
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: write
+
+concurrency:
+  group: terraform-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "false"
+  # Shared by plan/apply when Azure creds are present.
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+jobs:
+  # Always runs: fmt + init + validate. No cloud credentials required.
+  validate:
+    name: fmt / validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.8"
+          terraform_wrapper: false
+
+      - name: Terraform fmt
+        run: terraform fmt -check -recursive
+
+      - name: Terraform init (no backend)
+        run: terraform init -backend=false
+
+      - name: Terraform validate
+        run: terraform validate
+
+  # Full plan when Azure auth secrets are configured.
+  plan:
+    name: plan
+    needs: validate
+    runs-on: ubuntu-latest
+    # Skip cleanly when secrets are not wired (portfolio clone / fork without Azure).
+    if: ${{ secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_SUBSCRIPTION_ID != '' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.8"
+          terraform_wrapper: false
+
+      # ------------------------------------------------------------------
+      # Auth option A (recommended): OIDC federated credentials
+      # Secrets required:
+      #   AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID
+      # Azure side: App registration + federated credential:
+      #   repo:jeremylongshore/azure-landing-zone-starter:ref:refs/heads/main
+      #   (and :pull_request for PR plans)
+      # Role: Contributor on the target subscription or resource group.
+      # ------------------------------------------------------------------
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # ------------------------------------------------------------------
+      # Auth option B (alternative): service principal client secret
+      # Comment out the OIDC step above and use one of:
+      #
+      #   - name: Azure Login (Service Principal)
+      #     uses: azure/login@v2
+      #     with:
+      #       creds: ${{ secrets.AZURE_CREDENTIALS }}
+      #
+      # where AZURE_CREDENTIALS is JSON:
+      #   {
+      #     "clientId": "...",
+      #     "clientSecret": "...",
+      #     "subscriptionId": "...",
+      #     "tenantId": "..."
+      #   }
+      #
+      # Or set env vars directly (no azure/login step):
+      #   ARM_CLIENT_ID / ARM_CLIENT_SECRET / ARM_TENANT_ID / ARM_SUBSCRIPTION_ID
+      # ------------------------------------------------------------------
+
+      - name: Terraform init
+        run: terraform init
+
+      - name: Terraform plan
+        env:
+          TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          terraform plan \
+            -var="environment=dev" \
+            -var="project_name=alz" \
+            -out=tfplan
+          terraform show -no-color tfplan > plan.txt
+
+      - name: Comment plan on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('plan.txt', 'utf8');
+            const body = `#### Terraform plan\n\`\`\`\n${plan.substring(0, 60000)}\n\`\`\``;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });
+
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: |
+            tfplan
+            plan.txt
+          retention-days: 5
+
+  apply:
+    name: apply
+    needs: plan
+    runs-on: ubuntu-latest
+    if: >
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'push' &&
+      secrets.AZURE_CLIENT_ID != '' &&
+      secrets.AZURE_SUBSCRIPTION_ID != ''
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.8"
+          terraform_wrapper: false
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Terraform init
+        run: terraform init
+
+      - name: Terraform apply
+        env:
+          TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          terraform apply -auto-approve \
+            -var="environment=dev" \
+            -var="project_name=alz"

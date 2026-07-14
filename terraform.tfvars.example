@@ -1,0 +1,22 @@
+# Copy to terraform.tfvars (gitignored) and fill in values.
+#   cp terraform.tfvars.example terraform.tfvars
+
+subscription_id = "00000000-0000-0000-0000-000000000000"
+location        = "eastus"
+environment     = "dev" # dev | test | prod
+project_name    = "alz"
+
+# Optional — leave empty to create an action group without email receivers.
+alert_email = ""
+
+# Optional overrides
+# hub_address_space      = ["10.0.0.0/16"]
+# hub_app_subnet_prefix  = "10.0.1.0/24"
+# hub_data_subnet_prefix = "10.0.2.0/24"
+# spoke_address_space    = ["10.10.0.0/16"]
+# spoke_subnet_prefix    = "10.10.1.0/24"
+# log_retention_days     = 30
+
+# tags = {
+#   owner = "platform"
+# }

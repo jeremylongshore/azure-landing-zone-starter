@@ -29,7 +29,6 @@ concurrency:
 env:
   TF_IN_AUTOMATION: "true"
   TF_INPUT: "false"
-  # Shared by plan/apply when Azure creds are present.
   ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
   ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
@@ -58,17 +57,34 @@ jobs:
         run: terraform validate
 
   # Full plan when Azure auth secrets are configured.
+  # Note: secrets cannot be referenced in job-level `if` (workflow fails to parse).
+  # Detect credentials in a step instead.
   plan:
     name: plan
     needs: validate
     runs-on: ubuntu-latest
-    # Skip cleanly when secrets are not wired (portfolio clone / fork without Azure).
-    if: ${{ secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_SUBSCRIPTION_ID != '' }}
+    outputs:
+      has_creds: ${{ steps.creds.outputs.has_creds }}
     steps:
+      - name: Check Azure credentials
+        id: creds
+        env:
+          CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          SUB_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          if [ -n "$CLIENT_ID" ] && [ -n "$SUB_ID" ]; then
+            echo "has_creds=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_creds=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Azure secrets not configured — skipping plan/apply. CI validate still ran."
+          fi
+
       - name: Checkout
+        if: steps.creds.outputs.has_creds == 'true'
         uses: actions/checkout@v4
 
       - name: Setup Terraform
+        if: steps.creds.outputs.has_creds == 'true'
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.9.8"
@@ -84,6 +100,7 @@ jobs:
       # Role: Contributor on the target subscription or resource group.
       # ------------------------------------------------------------------
       - name: Azure Login (OIDC)
+        if: steps.creds.outputs.has_creds == 'true'
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -112,9 +129,11 @@ jobs:
       # ------------------------------------------------------------------
 
       - name: Terraform init
+        if: steps.creds.outputs.has_creds == 'true'
         run: terraform init
 
       - name: Terraform plan
+        if: steps.creds.outputs.has_creds == 'true'
         env:
           TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: |
@@ -125,7 +144,7 @@ jobs:
           terraform show -no-color tfplan > plan.txt
 
       - name: Comment plan on PR
-        if: github.event_name == 'pull_request'
+        if: steps.creds.outputs.has_creds == 'true' && github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
@@ -140,6 +159,7 @@ jobs:
             });
 
       - name: Upload plan artifact
+        if: steps.creds.outputs.has_creds == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: tfplan
@@ -152,11 +172,7 @@ jobs:
     name: apply
     needs: plan
     runs-on: ubuntu-latest
-    if: >
-      github.ref == 'refs/heads/main' &&
-      github.event_name == 'push' &&
-      secrets.AZURE_CLIENT_ID != '' &&
-      secrets.AZURE_SUBSCRIPTION_ID != ''
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.plan.outputs.has_creds == 'true'
     environment: production
     steps:
       - name: Checkout

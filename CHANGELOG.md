@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.1.2] - 2026-08-25
+
+- chore(funding): add Ko-fi alongside the existing funding sources (4ca64a9)
+- docs(readme): add the Ko-fi support badge (b156e09)
+
+
 ## [v0.1.1] - 2026-07-14
 
 - fix(ci): avoid secrets in job-level if for terraform workflow (9278411)

@@ -7,6 +7,8 @@ Free-tier-friendly Azure landing zone starter in Terraform: hub/spoke networking
 [![Terraform](https://img.shields.io/badge/terraform-%3E%3D1.5-7B42BC.svg)](https://www.terraform.io)
 [![azurerm](https://img.shields.io/badge/provider-azurerm%20~%3E%204.0-0078D4.svg)](https://registry.terraform.io/providers/hashicorp/azurerm/latest)
 
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/U5S225PTME)
+
 This validates that Terraform IaC patterns (modules, state discipline, CI plan/apply, monitoring as code) transfer cleanly from GCP production work to Azure.
 
 ## What this demonstrates

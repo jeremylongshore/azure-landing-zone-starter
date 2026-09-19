@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.1.3] - 2026-09-19
+
+- ci(deps): move GitHub actions off the node20 runtime before its removal (#12) (17bcd4a)
+
+
 ## [v0.1.2] - 2026-08-25
 
 - chore(funding): add Ko-fi alongside the existing funding sources (4ca64a9)

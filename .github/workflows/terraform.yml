@@ -39,10 +39,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: "1.9.8"
           terraform_wrapper: false
@@ -81,11 +81,11 @@ jobs:
 
       - name: Checkout
         if: steps.creds.outputs.has_creds == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Terraform
         if: steps.creds.outputs.has_creds == 'true'
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: "1.9.8"
           terraform_wrapper: false
@@ -101,7 +101,7 @@ jobs:
       # ------------------------------------------------------------------
       - name: Azure Login (OIDC)
         if: steps.creds.outputs.has_creds == 'true'
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -112,7 +112,7 @@ jobs:
       # Comment out the OIDC step above and use one of:
       #
       #   - name: Azure Login (Service Principal)
-      #     uses: azure/login@v2
+      #     uses: azure/login@v3
       #     with:
       #       creds: ${{ secrets.AZURE_CREDENTIALS }}
       #
@@ -145,7 +145,7 @@ jobs:
 
       - name: Comment plan on PR
         if: steps.creds.outputs.has_creds == 'true' && github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
@@ -160,7 +160,7 @@ jobs:
 
       - name: Upload plan artifact
         if: steps.creds.outputs.has_creds == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tfplan
           path: |
@@ -176,16 +176,16 @@ jobs:
     environment: production
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: "1.9.8"
           terraform_wrapper: false
 
       - name: Azure Login (OIDC)
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}

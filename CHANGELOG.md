@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.1.4] - 2026-09-24
+
+- chore(deps): bump hashicorp/random from 3.9.0 to 3.9.1 (#13) (429f135)
+
+
 ## [v0.1.3] - 2026-09-19
 
 - ci(deps): move GitHub actions off the node20 runtime before its removal (#12) (17bcd4a)

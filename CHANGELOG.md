@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.1.6] - 2026-09-24
+
+- fix(release): count orphaned tags and push the release commit and tag atomically (#15) (e550eda)
+- build(deps): bump actions/upload-artifact from 4 to 7 (#5) (d47e60a)
+- build(deps): bump hashicorp/setup-terraform from 3 to 4 (#3) (236e0fd)
+- build(deps): bump actions/checkout from 4 to 7 (#2) (68a6cb5)
+- build(deps): bump azure/login from 2 to 3 (#1) (1ad97ec)
+
+
 ## [v0.1.4] - 2026-09-24
 
 - chore(deps): bump hashicorp/random from 3.9.0 to 3.9.1 (#13) (429f135)

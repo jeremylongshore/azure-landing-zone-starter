@@ -73,7 +73,11 @@ jobs:
       - name: Determine previous tag
         id: prev
         run: |
-          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          # Highest semver tag anywhere, not just the nearest ancestor: a tag
+          # whose release commit never reached main (a push race) must still
+          # count, or every later run recomputes the same version and fails.
+          PREV_TAG=$(git tag -l 'v[0-9]*' --sort=-v:refname | head -1)
+          PREV_TAG=${PREV_TAG:-v0.0.0}
           echo "tag=$PREV_TAG" >> "$GITHUB_OUTPUT"
           echo "Previous tag: $PREV_TAG"
 
@@ -262,7 +266,9 @@ jobs:
         run: |
           NEXT="${{ steps.version.outputs.next }}"
           git tag -a "$NEXT" -m "Release $NEXT"
-          git push origin HEAD "$NEXT"
+          # --atomic: the branch update and the tag land together or not at
+          # all, so a rejected release commit can no longer orphan the tag.
+          git push --atomic origin HEAD "$NEXT"
           echo "Pushed tag $NEXT"
 
       - name: Create GitHub Release

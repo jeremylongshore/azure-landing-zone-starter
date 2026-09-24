@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.1.5] - 2026-09-24
+
+- chore(deps): bump hashicorp/azurerm from 4.81.0 to 5.6.0 (#14) (d4fcdda)
+
+
 ## [v0.1.4] - 2026-09-24
 
 - chore(deps): bump hashicorp/random from 3.9.0 to 3.9.1 (#13) (429f135)

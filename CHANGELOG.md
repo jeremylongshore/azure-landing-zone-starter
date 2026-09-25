@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.1.7] - 2026-09-25
+
+- build(deps): bump actions/github-script from 8 to 9 (#4) (adbff2b)
+
+
 ## [v0.1.6] - 2026-09-24
 
 - fix(release): count orphaned tags and push the release commit and tag atomically (#15) (e550eda)

@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.1.8] - 2026-10-14
+
+- docs: display official Intent Solutions Select partner badge (#19) (687b33c)
+
+
 ## [v0.1.7] - 2026-09-25
 
 - build(deps): bump actions/github-script from 8 to 9 (#4) (adbff2b)
